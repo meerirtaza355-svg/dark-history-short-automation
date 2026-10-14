@@ -16,11 +16,18 @@ def make_video():
     with open("story.json", "r", encoding="utf-8") as f:
         story = json.load(f)
 
-    title = story.get("title", "Dark History Short")
-    scenes = story.get("scenes", [])
+    title = story.get("title", "Dark History Short") if isinstance(story, dict) else "Dark History Short"
+    scenes = story.get("scenes", []) if isinstance(story, dict) else story
 
-    # Combine text for voiceover
-    full_text = " ".join([scene.get("text", "") for scene in scenes])
+    # Extract text properly whether scene is string or dict
+    text_list = []
+    for scene in scenes:
+        if isinstance(scene, dict):
+            text_list.append(scene.get("text", ""))
+        else:
+            text_list.append(str(scene))
+
+    full_text = " ".join(text_list)
     
     # Generate natural voice using gTTS (Google Text-to-Speech)
     print("Generating natural voiceover using gTTS...")
@@ -37,18 +44,17 @@ def make_video():
     
     duration = float(result.stdout.strip())
 
-    # Create simple background card images for scenes
+    # Create background card images for scenes
     images = []
-    for i, scene in enumerate(scenes):
+    for i, scene_text in enumerate(text_list):
         img_path = OUT / f"scene_{i:02d}.jpg"
         
         # Create a dark cinematic background image (1080x1920 for Shorts)
         img = Image.new('RGB', (1080, 1920), color=(15, 15, 15))
         draw = ImageDraw.Draw(img)
         
-        text = scene.get("text", "")
-        # Simple text wrapping / drawing logic
-        draw.text((100, 900), text, fill=(255, 255, 255))
+        # Simple text placement
+        draw.text((100, 900), scene_text, fill=(255, 255, 255))
         
         img.save(str(img_path))
         images.append(img_path)
@@ -56,11 +62,12 @@ def make_video():
     # Create image list file for ffmpeg concatenation
     concat_file = OUT / "images.txt"
     with open(concat_file, "w", encoding="utf-8") as f:
-        each_duration = duration / len(images)
+        each_duration = duration / len(images) if images else duration
         for p in images:
             f.write(f"file '{p.as_posix()}'\n")
             f.write(f"duration {each_duration:.4f}\n")
-        f.write(f"file '{images[-1].as_posix()}'\n")
+        if images:
+            f.write(f"file '{images[-1].as_posix()}'\n")
 
     video_output = OUT / "dark_history_short.mp4"
 
@@ -79,4 +86,3 @@ def make_video():
 
 if __name__ == "__main__":
     make_video()
-    
