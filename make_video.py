@@ -8,21 +8,99 @@ import requests
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageOps
 
+# Built-in viral dark history stories bank
+STORIES_BANK = [
+    {
+        "title": "The Terrifying Secret of the Bronze Bull 🐂 #shorts",
+        "description": "Discover the dark history of the ancient Bronze Bull of Phalaris, a horrific torture device designed in ancient Greece. #history #darkhistory #shorts",
+        "tags": ["Shorts", "History", "DarkHistory", "AncientGreece"],
+        "scenes": [
+            {
+                "text": "In ancient Greece, a ruthless ruler commissioned a hollow statue made entirely of solid bronze.",
+                "image_url": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "Criminals and enemies were locked alive inside the iron belly of the beast.",
+                "image_url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "A massive fire was lit underneath, slowly roasting the victims alive inside.",
+                "image_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "The statue was acoustically engineered so their screams sounded like an enraged bull's roar.",
+                "image_url": "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "In a twisted turn of fate, its creator was the very first person locked inside.",
+                "image_url": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1080&auto=format&fit=crop&q=80"
+            }
+        ]
+    },
+    {
+        "title": "The Real Dracula: Vlad the Impaler 🧛‍♂️ #shorts",
+        "description": "The true dark history of Vlad the Impaler, the ruthless ruler who inspired the legend of Dracula. #history #darkhistory #dracula #shorts",
+        "tags": ["Shorts", "History", "DarkHistory", "Dracula"],
+        "scenes": [
+            {
+                "text": "Long before Bram Stoker's fiction, Vlad III ruled Wallachia with unmatched terror.",
+                "image_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "He famously invited hundreds of corrupt nobles to a feast, only to slaughter them all.",
+                "image_url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "His favorite method of execution earned him the chilling nickname The Impaler.",
+                "image_url": "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "It is said he once dined calmly in front of a forest of thousands of impaled bodies.",
+                "image_url": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "Even invading armies turned back in pure horror upon seeing his gruesome warning fields.",
+                "image_url": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1080&auto=format&fit=crop&q=80"
+            }
+        ]
+    },
+    {
+        "title": "The Terrifying Iron Maiden Device ⛓️ #shorts",
+        "description": "Inside the medieval torture device known as the Iron Maiden. The dark history of medieval punishments. #history #darkhistory #torture #shorts",
+        "tags": ["Shorts", "History", "DarkHistory", "Medieval"],
+        "scenes": [
+            {
+                "text": "During the medieval ages, inventors designed some of the most horrific devices in human history.",
+                "image_url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "The Iron Maiden was an upright iron cabinet lined with sharp spikes inside.",
+                "image_url": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "When the heavy doors slowly closed, the spikes would pierce the victim without hitting vital organs.",
+                "image_url": "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "This ensured that the agonizing torture lasted for hours in absolute darkness.",
+                "image_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1080&auto=format&fit=crop&q=80"
+            },
+            {
+                "text": "It remains one of the darkest symbols of medieval cruelty and paranoia.",
+                "image_url": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1080&auto=format&fit=crop&q=80"
+            }
+        ]
+    }
+]
+
 def make_video():
     OUT = Path("output").resolve()
     OUT.mkdir(exist_ok=True)
 
-    if not os.path.exists("stories.json"):
-        raise FileNotFoundError("stories.json file nahi mili!")
-        
-    with open("stories.json", "r", encoding="utf-8") as f:
-        stories = json.load(f)
+    # Pick a dynamic story automatically
+    story = random.choice(STORIES_BANK)
 
-    if not stories:
-        raise ValueError("stories.json khali hai!")
-
-    story = random.choice(stories)
-
+    # Save active story for upload_youtube.py
     with open("story.json", "w", encoding="utf-8") as f:
         json.dump(story, f, indent=2)
 
@@ -31,11 +109,8 @@ def make_video():
     image_urls = [scene.get("image_url", "") for scene in scenes]
 
     full_text = " ".join(text_list)
-    if not full_text.strip():
-        full_text = "Dark history short story."
+    print(f"Generating video for topic: {story.get('title')}")
 
-    print(f"Selected Topic: {story.get('title', 'Dark History')}")
-    print("Generating voiceover using gTTS...")
     audio_path = OUT / "voice.mp3"
     tts = gTTS(text=full_text, lang='en', slow=False)
     tts.save(str(audio_path))
@@ -76,6 +151,7 @@ def make_video():
         if current_line:
             lines.append(current_line)
 
+        # Bottom positioned captions
         y = 1250 - (len(lines) * 40)
         for line in lines:
             draw.text((52, y+2), line, fill=(0, 0, 0))
@@ -97,7 +173,7 @@ def make_video():
 
     video_output = OUT / "dark_history_short.mp4"
 
-    print("Compiling professional video with FFmpeg & zoompan...")
+    print("Compiling cinematic moving video with FFmpeg...")
     run([
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "warning",
         "-f", "concat", "-safe", "0", "-i", str(concat_file),
@@ -108,7 +184,7 @@ def make_video():
         str(video_output)
     ], check=True)
 
-    print(f"Professional Video ban gayi: {video_output}")
+    print(f"Video created successfully: {video_output}")
 
 if __name__ == "__main__":
     make_video()
