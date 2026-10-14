@@ -13,7 +13,6 @@ def upload_video():
     creds = Credentials.from_authorized_user_file('token.json', SCOPES)
     youtube = build('youtube', 'v3', credentials=creds)
 
-    # Read title and description from story.json
     title = "Dark History Short"
     description = "Automated Dark History Short Video"
     tags = ["Shorts", "History", "DarkHistory"]
