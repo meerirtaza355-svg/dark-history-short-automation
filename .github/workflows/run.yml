@@ -1,7 +1,7 @@
 name: Generate Dark History Short
 
 on:
-  workflow_dispatch:  # Is se hum jab chahein manual button daba kar test kar sakenge
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,10 +15,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install FFmpeg and Dependencies
+      - name: Install FFmpeg, eSpeak, and Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg espeak-ng
           pip install -r requirements.txt
 
       - name: Run Video Generator
