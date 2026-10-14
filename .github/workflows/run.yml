@@ -1,4 +1,4 @@
-name: Generate Dark History Short
+name: Generate and Upload Dark History Short
 
 on:
   workflow_dispatch:
@@ -21,5 +21,13 @@ jobs:
           sudo apt-get install -y ffmpeg espeak-ng
           pip install -r requirements.txt
 
+      - name: Create Credential Files from Secrets
+        run: |
+          echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
+          echo '${{ secrets.YOUTUBE_REFRESH_TOKEN }}' > token.json
+
       - name: Run Video Generator
         run: python make_video.py
+
+      - name: Upload to YouTube (Private)
+        run: python upload_youtube.py
