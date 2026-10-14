@@ -1,108 +1,82 @@
-import json, os, subprocess, textwrap
+import os
+import json
 from pathlib import Path
+from subprocess import run
+from gtts import gTTS
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "output"
-OUT.mkdir(exist_ok=True)
-W, H = 1080, 1920
+def make_video():
+    OUT = Path("output")
+    OUT.mkdir(exist_ok=True)
 
+    # Load story.json
+    if not os.path.exists("story.json"):
+        raise FileNotFoundError("story.json file nahi mili!")
+        
+    with open("story.json", "r", encoding="utf-8") as f:
+        story = json.load(f)
 
-def run(cmd, **kwargs):
-    subprocess.run(cmd, check=True, **kwargs)
+    title = story.get("title", "Dark History Short")
+    scenes = story.get("scenes", [])
 
+    # Combine text for voiceover
+    full_text = " ".join([scene.get("text", "") for scene in scenes])
+    
+    # Generate natural voice using gTTS (Google Text-to-Speech)
+    print("Generating natural voiceover using gTTS...")
+    tts = gTTS(text=full_text, lang='en', slow=False)
+    audio_path = OUT / "voice.mp3"
+    tts.save(str(audio_path))
 
-def font(size, bold=False):
-    candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-    ]
-    for p in candidates:
-        if os.path.exists(p):
-            return ImageFont.truetype(p, size)
-    return ImageFont.load_default()
+    # Get audio duration using ffprobe
+    result = run([
+        "ffprobe", "-v", "error", "-show_entries",
+        "format=duration", "-of",
+        "default=noprint_wrappers=1:nokey=1", str(audio_path)
+    ], capture_output=True, text=True)
+    
+    duration = float(result.stdout.strip())
 
-
-def wrap(draw, text, f, max_width):
-    lines = []
-    for paragraph in text.split("\n"):
-        words = paragraph.split()
-        line = ""
-        for word in words:
-            trial = f"{line} {word}".strip()
-            if draw.textbbox((0, 0), trial, font=f)[2] <= max_width:
-                line = trial
-            else:
-                if line: lines.append(line)
-                line = word
-        lines.append(line)
-    return lines
-
-
-def create_card(text, index, total, path):
-    img = Image.new("RGB", (W, H), (13, 18, 28))
-    d = ImageDraw.Draw(img)
-    # Simple dark graphic treatment, no copyrighted stock footage.
-    for y in range(H):
-        shade = int(18 + 24 * y / H)
-        d.line((0, y, W, y), fill=(shade // 2, shade // 1, shade))
-    d.rectangle((70, 220, W-70, 225), fill=(203, 157, 83))
-    d.rectangle((70, H-270, W-70, H-265), fill=(203, 157, 83))
-    d.text((80, 155), "DARK HISTORY  /  CASE FILE", font=font(32, True), fill=(221, 190, 135))
-    f = font(62 if len(text) < 45 else 49, True)
-    lines = wrap(d, text, f, W-180)
-    line_h = 1.35 * f.size
-    total_h = line_h * len(lines)
-    y = (H-total_h)/2
-    for line in lines:
-        box = d.textbbox((0, 0), line, font=f)
-        x = (W - (box[2]-box[0]))/2
-        d.text((x, y), line, font=f, fill=(245, 241, 231), stroke_width=1, stroke_fill=(10, 10, 12))
-        y += line_h
-    d.text((80, H-220), "HISTORICAL EXPLAINER  •  VERIFY SOURCES", font=font(24, True), fill=(190, 195, 204))
-    d.text((W-150, H-160), f"{index+1:02d}/{total:02d}", font=font(30, True), fill=(221, 190, 135))
-    img.save(path, quality=92)
-
-
-def probe_duration(path):
-    out = subprocess.check_output([
-        "ffprobe", "-v", "error", "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1", str(path)
-    ], text=True).strip()
-    return float(out)
-
-
-def main():
-    story = json.loads((ROOT / "story.json").read_text(encoding="utf-8"))
-    # Keep the narration comfortably within the Shorts 60-second target.
-    wav = OUT / "narration.wav"
-    run(["espeak-ng", "-v", "en-us", "-s", "145", "-w", str(wav), story["narration"]])
-    duration = probe_duration(wav)
-    if duration > 59:
-        raise SystemExit(f"Narration is {duration:.1f}s; shorten story.json narration to under 59 seconds.")
-    scenes = story["scenes"]
+    # Create simple background card images for scenes
     images = []
     for i, scene in enumerate(scenes):
-        p = OUT / f"scene_{i:02d}.jpg"
-        create_card(scene, i, len(scenes), p)
-        images.append(p)
-    each = duration / len(images)
-    concat = OUT / "images.txt"
-    with concat.open("w", encoding="utf-8") as f:
+        img_path = OUT / f"scene_{i:02d}.jpg"
+        
+        # Create a dark cinematic background image (1080x1920 for Shorts)
+        img = Image.new('RGB', (1080, 1920), color=(15, 15, 15))
+        draw = ImageDraw.Draw(img)
+        
+        text = scene.get("text", "")
+        # Simple text wrapping / drawing logic
+        draw.text((100, 900), text, fill=(255, 255, 255))
+        
+        img.save(str(img_path))
+        images.append(img_path)
+
+    # Create image list file for ffmpeg concatenation
+    concat_file = OUT / "images.txt"
+    with open(concat_file, "w", encoding="utf-8") as f:
+        each_duration = duration / len(images)
         for p in images:
             f.write(f"file '{p.as_posix()}'\n")
-            f.write(f"duration {each:.4f}\n")
+            f.write(f"duration {each_duration:.4f}\n")
         f.write(f"file '{images[-1].as_posix()}'\n")
-    video = OUT / "dark_history_short.mp4"
+
+    video_output = OUT / "dark_history_short.mp4"
+
+    # Compile video with ffmpeg using the new natural voiceover
+    print("Compiling video with FFmpeg...")
     run([
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-        "-f", "concat", "-safe", "0", "-i", str(concat),
-        "-i", str(wav), "-vf", "fps=30,format=yuv420p",
+        "-f", "concat", "-safe", "0", "-i", str(concat_file),
+        "-i", str(audio_path), "-vf", "fps=30,format=yuv420p",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "25",
-        "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", str(video)
+        "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart",
+        str(video_output)
     ])
-    (OUT / "metadata.json").write_text(json.dumps({"title": story["title"], "description": story["description"]}, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Created {video} ({duration:.1f} sec)")
+
+    print(f"Video successfully ban gayi: {video_output} ({duration:.1f} sec)")
 
 if __name__ == "__main__":
-    main()
+    make_video()
+    
