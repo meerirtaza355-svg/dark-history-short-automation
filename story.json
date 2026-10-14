@@ -1,19 +1,27 @@
 {
-  "title": "The Cursed Clock of Prague 🕰️ #shorts",
-  "description": "Did you know the creator of Prague's astronomical clock was brutally blinded? Watch the dark history unfold. #history #darkhistory #shorts",
-  "tags": ["Shorts", "History", "DarkHistory", "Prague"],
+  "title": "The Terrifying Secret of the Bronze Bull 🐂 #shorts",
+  "description": "Discover the dark history of the ancient Bronze Bull of Phalaris, a horrific torture device designed in ancient Greece. #history #darkhistory #shorts",
+  "tags": ["Shorts", "History", "DarkHistory", "AncientGreece"],
   "scenes": [
     {
-      "text": "Did you know the creator of Prague's astronomical clock was brutally blinded?",
+      "text": "In ancient Greece, a ruthless ruler commissioned a hollow statue made entirely of solid bronze.",
+      "image_url": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1080&auto=format&fit=crop&q=80"
+    },
+    {
+      "text": "Criminals and enemies were locked alive inside the iron belly of the beast.",
+      "image_url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=1080&auto=format&fit=crop&q=80"
+    },
+    {
+      "text": "A massive fire was lit underneath, slowly roasting the victims alive inside.",
+      "image_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1080&auto=format&fit=crop&q=80"
+    },
+    {
+      "text": "The statue was acoustically engineered so their screams sounded like an enraged bull's roar.",
       "image_url": "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=1080&auto=format&fit=crop&q=80"
     },
     {
-      "text": "The city council feared he would build an even greater masterpiece elsewhere.",
+      "text": "In a twisted turn of fate, its creator was the very first person locked inside.",
       "image_url": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1080&auto=format&fit=crop&q=80"
-    },
-    {
-      "text": "In revenge, he jammed the complex gears with his bare hands, cursing it for centuries.",
-      "image_url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=1080&auto=format&fit=crop&q=80"
     }
   ]
 }
