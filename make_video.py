@@ -6,7 +6,7 @@ from gtts import gTTS
 from PIL import Image, ImageDraw
 
 def make_video():
-    OUT = Path("output")
+    OUT = Path("output").resolve()
     OUT.mkdir(exist_ok=True)
 
     # Load story.json
@@ -35,7 +35,7 @@ def make_video():
     tts = gTTS(text=full_text, lang='en', slow=False)
     tts.save(str(audio_path))
 
-    # Get audio duration using ffprobe with error checking
+    # Get audio duration using ffprobe
     print("Checking audio duration...")
     result = run([
         "ffprobe", "-v", "error", "-show_entries",
@@ -45,7 +45,7 @@ def make_video():
     
     duration = float(result.stdout.strip())
 
-    # Create background card images for scenes
+    # Create background card images for scenes using absolute paths
     images = []
     for i, scene_text in enumerate(text_list):
         img_path = OUT / f"scene_{i:02d}.jpg"
@@ -55,19 +55,19 @@ def make_video():
         img.save(str(img_path))
         images.append(img_path)
 
-    # Create image list file for ffmpeg
+    # Create image list file for ffmpeg using absolute paths to avoid path errors
     concat_file = OUT / "images.txt"
     with open(concat_file, "w", encoding="utf-8") as f:
         each_duration = duration / len(images) if images else duration
         for p in images:
-            f.write(f"file '{p.as_posix()}'\n")
+            f.write(f"file '{p.resolve().as_posix()}'\n")
             f.write(f"duration {each_duration:.4f}\n")
         if images:
-            f.write(f"file '{images[-1].as_posix()}'\n")
+            f.write(f"file '{images[-1].resolve().as_posix()}'\n")
 
     video_output = OUT / "dark_history_short.mp4"
 
-    # Compile video with ffmpeg and check=True to catch errors instantly
+    # Compile video with ffmpeg
     print("Compiling video with FFmpeg...")
     run([
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "warning",
