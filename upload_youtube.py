@@ -27,7 +27,7 @@ def upload_video():
     }
 
     # Video file upload
-    media = MediaFileUpload('output.mp4', chunksize=-1, resumable=True)
+    media = MediaFileUpload('output/dark_history_short.mp4', chunksize=-1, resumable=True)
     request = youtube.videos().insert(
         part=','.join(body.keys()),
         body=body,
