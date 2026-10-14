@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from subprocess import run
 from gtts import gTTS
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 def make_video():
     OUT = Path("output")
@@ -16,10 +16,8 @@ def make_video():
     with open("story.json", "r", encoding="utf-8") as f:
         story = json.load(f)
 
-    title = story.get("title", "Dark History Short") if isinstance(story, dict) else "Dark History Short"
     scenes = story.get("scenes", []) if isinstance(story, dict) else story
 
-    # Extract text properly whether scene is string or dict
     text_list = []
     for scene in scenes:
         if isinstance(scene, dict):
@@ -28,19 +26,22 @@ def make_video():
             text_list.append(str(scene))
 
     full_text = " ".join(text_list)
-    
-    # Generate natural voice using gTTS (Google Text-to-Speech)
-    print("Generating natural voiceover using gTTS...")
-    tts = gTTS(text=full_text, lang='en', slow=False)
+    if not full_text.strip():
+        full_text = "Dark history short story."
+
+    # Generate natural voice using gTTS
+    print("Generating voiceover using gTTS...")
     audio_path = OUT / "voice.mp3"
+    tts = gTTS(text=full_text, lang='en', slow=False)
     tts.save(str(audio_path))
 
-    # Get audio duration using ffprobe
+    # Get audio duration using ffprobe with error checking
+    print("Checking audio duration...")
     result = run([
         "ffprobe", "-v", "error", "-show_entries",
         "format=duration", "-of",
         "default=noprint_wrappers=1:nokey=1", str(audio_path)
-    ], capture_output=True, text=True)
+    ], capture_output=True, text=True, check=True)
     
     duration = float(result.stdout.strip())
 
@@ -48,18 +49,13 @@ def make_video():
     images = []
     for i, scene_text in enumerate(text_list):
         img_path = OUT / f"scene_{i:02d}.jpg"
-        
-        # Create a dark cinematic background image (1080x1920 for Shorts)
         img = Image.new('RGB', (1080, 1920), color=(15, 15, 15))
         draw = ImageDraw.Draw(img)
-        
-        # Simple text placement
         draw.text((100, 900), scene_text, fill=(255, 255, 255))
-        
         img.save(str(img_path))
         images.append(img_path)
 
-    # Create image list file for ffmpeg concatenation
+    # Create image list file for ffmpeg
     concat_file = OUT / "images.txt"
     with open(concat_file, "w", encoding="utf-8") as f:
         each_duration = duration / len(images) if images else duration
@@ -71,16 +67,19 @@ def make_video():
 
     video_output = OUT / "dark_history_short.mp4"
 
-    # Compile video with ffmpeg using the new natural voiceover
+    # Compile video with ffmpeg and check=True to catch errors instantly
     print("Compiling video with FFmpeg...")
     run([
-        "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+        "ffmpeg", "-y", "-hide_banner", "-loglevel", "warning",
         "-f", "concat", "-safe", "0", "-i", str(concat_file),
         "-i", str(audio_path), "-vf", "fps=30,format=yuv420p",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "25",
         "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart",
         str(video_output)
-    ])
+    ], check=True)
+
+    if not video_output.exists():
+        raise FileNotFoundError("Video file create nahi ho saki!")
 
     print(f"Video successfully ban gayi: {video_output} ({duration:.1f} sec)")
 
