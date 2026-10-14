@@ -51,14 +51,14 @@ def make_video():
             img = Image.new('RGB', (1080, 1920), color=(10, 10, 10))
 
         img = ImageOps.fit(img, (1080, 1920), method=Image.Resampling.LANCZOS)
-        overlay = Image.new('RGBA', img.size, (0, 0, 0, 130))
+        overlay = Image.new('RGBA', img.size, (0, 0, 0, 140))
         img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
 
         draw = ImageDraw.Draw(img)
         words = scene_text.split()
         lines, current_line = [], ""
         for word in words:
-            if len(current_line + " " + word) <= 26:
+            if len(current_line + " " + word) <= 24:
                 current_line = (current_line + " " + word).strip()
             else:
                 lines.append(current_line)
@@ -66,7 +66,8 @@ def make_video():
         if current_line:
             lines.append(current_line)
 
-        y = 850
+        # Text positioning set to lower section of the screen (y = 1300 onwards)
+        y = 1250 - (len(lines) * 40)
         for line in lines:
             draw.text((52, y+2), line, fill=(0, 0, 0))
             draw.text((50, y), line, fill=(255, 255, 255))
