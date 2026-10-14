@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from pathlib import Path
 from subprocess import run
 from gtts import gTTS
@@ -11,20 +12,29 @@ def make_video():
     OUT = Path("output").resolve()
     OUT.mkdir(exist_ok=True)
 
-    if not os.path.exists("story.json"):
-        raise FileNotFoundError("story.json file nahi mili!")
+    if not os.path.exists("stories.json"):
+        raise FileNotFoundError("stories.json file nahi mili!")
         
-    with open("story.json", "r", encoding="utf-8") as f:
-        story = json.load(f)
+    with open("stories.json", "r", encoding="utf-8") as f:
+        stories = json.load(f)
 
-    scenes = story.get("scenes", []) if isinstance(story, dict) else story
-    text_list = [scene.get("text", "") if isinstance(scene, dict) else str(scene) for scene in scenes]
-    image_urls = [scene.get("image_url", "") if isinstance(scene, dict) else "" for scene in scenes]
+    if not stories:
+        raise ValueError("stories.json khali hai!")
+
+    story = random.choice(stories)
+
+    with open("story.json", "w", encoding="utf-8") as f:
+        json.dump(story, f, indent=2)
+
+    scenes = story.get("scenes", [])
+    text_list = [scene.get("text", "") for scene in scenes]
+    image_urls = [scene.get("image_url", "") for scene in scenes]
 
     full_text = " ".join(text_list)
     if not full_text.strip():
         full_text = "Dark history short story."
 
+    print(f"Selected Topic: {story.get('title', 'Dark History')}")
     print("Generating voiceover using gTTS...")
     audio_path = OUT / "voice.mp3"
     tts = gTTS(text=full_text, lang='en', slow=False)
@@ -66,7 +76,6 @@ def make_video():
         if current_line:
             lines.append(current_line)
 
-        # Text positioning set to lower section of the screen (y = 1300 onwards)
         y = 1250 - (len(lines) * 40)
         for line in lines:
             draw.text((52, y+2), line, fill=(0, 0, 0))
@@ -88,7 +97,7 @@ def make_video():
 
     video_output = OUT / "dark_history_short.mp4"
 
-    print("Compiling cinematic moving video with FFmpeg...")
+    print("Compiling professional video with FFmpeg & zoompan...")
     run([
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "warning",
         "-f", "concat", "-safe", "0", "-i", str(concat_file),
